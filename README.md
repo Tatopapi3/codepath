@@ -2,6 +2,7 @@
 
 > Duolingo for programming. Learn Python, JavaScript, TypeScript, HTML, CSS, SQL, React, and Git through a winding map of hexagonal lesson nodes, streaks, XP, coins, and a Claude-powered AI tutor.
 
+[![GitHub](https://img.shields.io/badge/GitHub-Tatopapi3%2Fcodepath-181717?logo=github)](https://github.com/Tatopapi3/codepath)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20DB-green) ![Claude](https://img.shields.io/badge/Claude-Sonnet%204-blue) ![Tailwind](https://img.shields.io/badge/Tailwind-v4-cyan)
 
 ---
@@ -70,7 +71,7 @@
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/codepath.git
+git clone https://github.com/Tatopapi3/codepath.git
 cd codepath
 npm install
 ```
