@@ -21,8 +21,8 @@ interface LessonClientProps {
 
 export default function LessonClient({ lesson, userId, profile, alreadyCompleted }: LessonClientProps) {
   const router = useRouter();
-  const { addXP, addCoins, setUser } = useUserStore();
-  const [phase, setPhase] = useState<'content' | 'done'>(alreadyCompleted ? 'done' : 'content');
+  const { addXP, addCoins } = useUserStore();
+  const [phase, setPhase] = useState<'content' | 'done'>('content');
   const [showAnim, setShowAnim] = useState(false);
   const [xpGained, setXpGained] = useState(0);
   const [coinsGained, setCoinsGained] = useState(0);
@@ -35,46 +35,35 @@ export default function LessonClient({ lesson, userId, profile, alreadyCompleted
     if (phase === 'done') return;
 
     const supabase = createClient();
-    const isFirst = !profile || profile.xp === 0;
-    const streak = profile?.streak ?? 0;
 
-    const xpCalc = calcXP(type, score ?? null, isFirst, streak);
-    const coins = calcCoins(type, score ?? null);
+    if (!alreadyCompleted) {
+      const isFirst = !profile || profile.xp === 0;
+      const streak = profile?.streak ?? 0;
 
-    setXpGained(xpCalc.total);
-    setCoinsGained(coins);
+      const xpCalc = calcXP(type, score ?? null, isFirst, streak);
+      const coins = calcCoins(type, score ?? null);
 
-    // Save progress
-    await supabase.from('user_progress').upsert(
-      {
-        user_id: userId,
-        lesson_id: lesson.id,
-        completed: true,
-        score: score ?? null,
-        completed_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,lesson_id' }
-    );
+      setXpGained(xpCalc.total);
+      setCoinsGained(coins);
 
-    // Update user XP + coins
-    const newXP = (profile?.xp ?? 0) + xpCalc.total;
-    const newCoins = (profile?.coins ?? 0) + coins;
+      await supabase.from('user_progress').upsert(
+        { user_id: userId, lesson_id: lesson.id, completed: true, score: score ?? null, completed_at: new Date().toISOString() },
+        { onConflict: 'user_id,lesson_id' }
+      );
 
-    await supabase
-      .from('users')
-      .update({
-        xp: newXP,
-        coins: newCoins,
-        last_active: new Date().toISOString().split('T')[0],
-      })
-      .eq('id', userId);
+      const newXP = (profile?.xp ?? 0) + xpCalc.total;
+      const newCoins = (profile?.coins ?? 0) + coins;
 
-    // Update local store
-    addXP(xpCalc.total);
-    addCoins(coins);
+      await supabase.from('users').update({
+        xp: newXP, coins: newCoins, last_active: new Date().toISOString().split('T')[0],
+      }).eq('id', userId);
+
+      addXP(xpCalc.total);
+      addCoins(coins);
+      setShowAnim(true);
+    }
 
     setPhase('done');
-    setShowAnim(true);
   }
 
   function handleAnimDismiss() {
