@@ -38,7 +38,7 @@ export default function ProfileClient({ profile, achievements, earnedIds, comple
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from('user_progress').delete().eq('user_id', user.id);
-      await supabase.from('profiles').update({ xp: 0, coins: 0, streak: 0 }).eq('id', user.id);
+      await supabase.from('users').update({ xp: 0, coins: 0, streak: 0 }).eq('id', user.id);
     }
     setResetting(false);
     setShowResetConfirm(false);
