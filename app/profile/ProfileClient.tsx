@@ -5,9 +5,9 @@ import Header from '@/components/ui/Header';
 import BottomNav from '@/components/ui/BottomNav';
 import XPBar from '@/components/ui/XPBar';
 import { getLevelFromXP } from '@/lib/gamification/xp';
-import { LogOut, Flame, Trophy, BookOpen, Coins } from 'lucide-react';
+import { LogOut, Trophy, RotateCcw } from 'lucide-react';
 import type { Achievement, UserProfile } from '@/lib/content/types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useUserStore } from '@/stores/userStore';
 
 interface ProfileClientProps {
@@ -23,10 +23,26 @@ export default function ProfileClient({ profile, achievements, earnedIds, comple
 
   useEffect(() => { if (profile) setUser(profile); }, [profile, setUser]);
 
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/auth/login');
+  }
+
+  async function handleResetProgress() {
+    setResetting(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('user_progress').delete().eq('user_id', user.id);
+      await supabase.from('profiles').update({ xp: 0, coins: 0, streak: 0 }).eq('id', user.id);
+    }
+    setResetting(false);
+    setShowResetConfirm(false);
+    router.refresh();
   }
 
   const xp = profile?.xp ?? 0;
@@ -106,6 +122,39 @@ export default function ProfileClient({ profile, achievements, earnedIds, comple
             })}
           </div>
         </div>
+
+        {/* Reset Progress */}
+        {!showResetConfirm ? (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-700 bg-gray-900 py-3.5 text-sm font-semibold text-gray-400 hover:bg-gray-800 transition-colors"
+          >
+            <RotateCcw size={16} />
+            Reset Progress
+          </button>
+        ) : (
+          <div className="rounded-xl border border-orange-800/40 bg-orange-950/20 p-4 space-y-3">
+            <p className="text-sm font-semibold text-orange-300 text-center">Reset all progress?</p>
+            <p className="text-xs text-gray-400 text-center">
+              This will delete all completed lessons, XP, coins, and streaks. This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 rounded-lg border border-gray-700 py-2.5 text-sm font-semibold text-gray-400 hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetProgress}
+                disabled={resetting}
+                className="flex-1 rounded-lg bg-orange-600 py-2.5 text-sm font-bold text-white hover:bg-orange-500 disabled:opacity-60 transition-colors"
+              >
+                {resetting ? 'Resetting…' : 'Yes, Reset'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Sign out */}
         <button
